@@ -1,0 +1,42 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Wallet Intelligence</title>
+<style>
+:root{--bg:#0b1220;--card:#121c30;--line:#1e2b45;--tx:#e6edf7;--mut:#8da0bd;--g:#2ee59d;--r:#ff5c7a;--y:#ffc857;--b:#5aa9ff}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--tx);font:14px/1.45 system-ui,Segoe UI,Roboto,sans-serif;padding:12px;max-width:900px;margin:auto}
+h1{font-size:18px;margin:4px 0}h2{font-size:13px;color:var(--mut);text-transform:uppercase;letter-spacing:.08em;margin:18px 0 8px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin-bottom:8px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px}.k{color:var(--mut);font-size:11px}.v{font-size:18px;font-weight:700}
+.pill{display:inline-block;padding:1px 8px;border-radius:99px;font-size:11px;font-weight:700;border:1px solid var(--line)}
+.COMPLETE,.OK{color:var(--g)}.PARTIAL{color:var(--y)}.INCOMPLETE,.FAILED{color:var(--r)}
+.tabs{display:flex;gap:6px;overflow-x:auto;padding-bottom:6px}.tab{padding:5px 10px;border-radius:8px;background:var(--card);border:1px solid var(--line);color:var(--mut);white-space:nowrap;cursor:pointer;font-size:12px}.tab.on{color:var(--tx);border-color:var(--b)}
+.addr{font-family:ui-monospace,monospace;font-size:12px}a{color:var(--b);text-decoration:none}.why div{font-size:12px;color:var(--tx)}.risk div{font-size:12px;color:var(--y)}
+.row{display:flex;justify-content:space-between;gap:8px;align-items:center}small{color:var(--mut)}details summary{cursor:pointer}
+</style></head><body>
+<h1>Solana Wallet Intelligence <small id="gen"></small></h1>
+<div id="lab" class="card" style="font-size:12px;color:var(--mut)"></div>
+<div id="app">Loading…</div>
+<script>
+const $=s=>document.querySelector(s);let D=null,tab=null;
+const sh=a=>a.slice(0,5)+'…'+a.slice(-5);
+const num=(x,d=2)=>x==null?'NOT_OBSERVED':(+x).toFixed(d);
+function ist(t){if(!t)return'-';return new Date(t).toLocaleString('en-IN',{timeZone:'Asia/Kolkata',hour12:true,day:'2-digit',month:'short',hour:'numeric',minute:'2-digit'})}
+function walletCard(w){return `<details class="card"><summary><div class="row"><span><a class="addr" href="https://solscan.io/account/${w.wallet}" target="_blank">${sh(w.wallet)}</a> <span class="pill">${w.tier}. ${w.tier_label}</span></span><span>score ${num(w.score,1)} · conf <b>${w.confidence}</b></span></div><small>${w.behavior} · ${w.n_trades} trades · ${w.n_resolved} resolved (${w.n_wins}W/${w.n_losses}L) · ${w.n_open} open · ${w.n_early} early</small></summary>
+<div class="why"><h2>Why</h2>${w.why.map(x=>`<div>${x}</div>`).join('')}</div><div class="risk"><h2>Risks</h2>${w.risks.map(x=>`<div>${x}</div>`).join('')}</div><small>${w.explanation}</small></details>`}
+function render(){const L=D.last_cycle,T=D.totals;if(!L){$('#app').innerHTML='<div class="card">No completed cycle yet. '+(D.running_cycle?'Cycle #'+D.running_cycle.cycle_id+' running.':'')+'</div>';return}
+const rk=D.rankings||{};const cats=Object.keys(rk);if(!tab||!rk[tab])tab=cats[0];
+let h=`<div class="card"><div class="row"><b>CYCLE #${L.CYCLE_ID}</b><span class="pill ${L.DATA_QUALITY}">DATA ${L.DATA_QUALITY}</span></div><small>${ist(L.START_TIME)} → ${ist(L.END_TIME)} IST · every ${D.cycle_interval_minutes} min${D.running_cycle?' · cycle #'+D.running_cycle.cycle_id+' RUNNING':''}</small>
+<div style="font-size:17px;font-weight:800;margin:8px 0">${L.FINAL_RESULT}</div>${L.REASONS.map(r=>`<div><small>• ${r}</small></div>`).join('')}</div>
+<div class="grid">${[['Wallets in DB',T.wallets],['Scanned',L.WALLETS.Scanned],['New',L.WALLETS.New],['Active',L.WALLETS.Active],['Evaluated',L.WALLETS.Evaluated],['New txs',L.ACTIVITY.New_transactions],['New trades',L.ACTIVITY.New_trades],['Early entries',L.EARLY_ENTRY.Detected],['Outcomes known',L.OUTCOMES.Known],['Open',L.OUTCOMES.Pending_open],['Not observed',L.OUTCOMES.Not_observed],['Qualified',L.WALLET_QUALITY.Qualified]].map(([k,v])=>`<div class="card"><div class="k">${k}</div><div class="v">${v}</div></div>`).join('')}</div>
+<h2>Stages</h2><div class="card">${D.stages.map(s=>`<div class="row"><span>${s.stage}</span><span class="pill ${s.status}">${s.status}</span></div><small>${s.detail||''}</small>`).join('')}</div>
+<h2>Market regime (observed)</h2><div class="card">${D.regime.tags}<br><small>${JSON.stringify(D.regime.metrics)}</small></div>
+<h2>Classification tiers</h2><div class="card">${Object.entries(D.tier_counts||{}).map(([k,v])=>`<div class="row"><span>${k}</span><b>${v}</b></div>`).join('')||'none'}</div>
+<h2>Rankings</h2><div class="tabs">${cats.map(c=>`<div class="tab ${c==tab?'on':''}" onclick="tab='${c}';render()">${c}</div>`).join('')}</div>
+${(rk[tab]||[]).map(r=>`<div class="card"><div class="row"><span>#${r.rank} <a class="addr" href="https://solscan.io/account/${r.wallet}" target="_blank">${sh(r.wallet)}</a></span><span class="pill">${r.tier_label}</span></div><small>${r.detail} · ${r.behavior} · conf ${r.confidence}</small></div>`).join('')||'<div class="card"><small>No wallet qualifies for this ranking in the current data (NOT a failure).</small></div>'}
+<h2>Wallets: why / risks (top 60)</h2>${(D.wallets||[]).map(walletCard).join('')}
+<h2>Multi-wallet convergence (NOT a signal)</h2>${(D.convergence||[]).map(c=>`<div class="card"><small>${c.mint.slice(0,8)}… · ${c.n_wallets} wallets · ${ist(c.window_start)} · independence ${c.independence} · quality wallets ${c.quality_wallets}</small></div>`).join('')||'<div class="card"><small>none</small></div>'}
+<h2>Cycle history</h2>${D.history.map(c=>`<div class="card row"><span>#${c.cycle_id} <small>${ist(c.start_ts)}</small></span><span><span class="pill ${c.data_quality}">${c.data_quality}</span> ${c.final_result}</span></div>`).join('')}
+<h2>Errors (recent)</h2>${D.recent_errors.map(e=>`<div><small>${e.ts} #${e.cycle_id||'-'} ${e.stage}: ${e.message}</small></div>`).join('')||'<small>none</small>'}`;
+$('#app').innerHTML=h;$('#gen').textContent='updated '+ist(D.generated_at);$('#lab').textContent=D.data_label}
+async function load(){try{const r=await fetch('tracker-live.json?'+Date.now());D=await r.json();render()}catch(e){$('#app').innerHTML='<div class="card">DATA INCOMPLETE: could not load tracker-live.json ('+e+')</div>'}}
+load();setInterval(load,30000);
+</script></body></html>
