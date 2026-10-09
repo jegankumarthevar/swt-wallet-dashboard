@@ -1,0 +1,56 @@
+CYCLE #94
+START TIME: 2026-10-09T19:21:28Z
+END TIME: 2026-10-09T21:10:28Z
+
+WALLETS:
+- Scanned: 3638
+- New: 1348
+- Active: 3431
+- Evaluated: 43996
+- Total in db: 77029
+
+ACTIVITY:
+- New transactions: 6953
+- New token interactions: 1295
+- New trades: 1295
+- Skipped unparseable: 0
+
+EARLY ENTRY:
+- Detected: 242
+- Detected total all cycles: 17762
+- Qualified wallets: 3
+
+OUTCOMES:
+- Known: 32361
+- Profitable: 12899
+- Loss: 9623
+- Partial: 9839
+- Pending open: 13600
+- Not observed: 18929
+- Data incomplete: 0
+
+WALLET QUALITY:
+- High confidence: 0
+- Medium: 34
+- Low: 313
+- Candidates: 344
+- Qualified: 3
+- Insufficient sample: 30329
+
+POOLS:
+- ok: 33
+- failed: 0
+- possible gaps: 20
+
+STAGES: DISCOVERY=OK, CAPTURE=OK, REGIME=OK, EARLY_ENTRY_AND_TRADE_HISTORY=OK, OUTCOME_TRACKING=OK, CLUSTER_INTELLIGENCE=OK, WALLET_QUALITY_CONFIDENCE_BEHAVIOR=OK, RANKING=OK
+ERRORS LOGGED: 20
+
+DATA QUALITY:
+PARTIAL
+
+FINAL RESULT:
+QUALIFIED WALLETS
+
+REASONS:
+- pool failures=0, possible trade gaps=20, errors logged=20
+- 3 wallet(s) meet every documented criterion (see wallet_scores.explanation)
